@@ -3,10 +3,10 @@ import ZAI from 'z-ai-web-dev-sdk'
 import { db } from '@/lib/db'
 
 // Diarization service configuration
-const DIARIZATION_SERVICE_URL = process.env.DIARIZATION_SERVICE_URL || '/?XTransformPort=3002'
+const DIARIZATION_SERVICE_URL = process.env.DIARIZATION_SERVICE_URL || 'http://localhost:3002'
 
 // Audio converter service configuration
-const CONVERTER_SERVICE_URL = process.env.CONVERTER_SERVICE_URL || '/?XTransformPort=3004'
+const CONVERTER_SERVICE_URL = process.env.CONVERTER_SERVICE_URL || 'http://localhost:3004'
 
 interface DiarizationSegment {
   start: number
@@ -62,8 +62,27 @@ function detectAudioFormat(fileName: string, mimeType?: string): string {
 async function convertToWav(base64Audio: string, inputFormat: string): Promise<string> {
   try {
     console.log(`Converting ${inputFormat} to WAV...`)
+    console.log(`Converter service URL: ${CONVERTER_SERVICE_URL}`)
 
-    const response = await fetch(CONVERTER_SERVICE_URL + '/convert-base64', {
+    // First check if converter service is available
+    try {
+      const healthCheck = await fetch(`${CONVERTER_SERVICE_URL}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      })
+      
+      if (!healthCheck.ok) {
+        throw new Error('Converter service is not responding')
+      }
+      
+      const healthData = await healthCheck.json()
+      console.log('Converter service health:', healthData)
+    } catch (healthError) {
+      console.error('Converter service health check failed:', healthError)
+      throw new Error('Audio converter service is not running. Please start it with: cd mini-services/audio-converter-service && npm install && npm run dev')
+    }
+
+    const response = await fetch(`${CONVERTER_SERVICE_URL}/convert-base64`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -77,7 +96,7 @@ async function convertToWav(base64Audio: string, inputFormat: string): Promise<s
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.message || 'Conversion failed')
+      throw new Error(error.message || error.error || 'Conversion failed')
     }
 
     const data: ConverterResponse = await response.json()
@@ -92,7 +111,7 @@ async function convertToWav(base64Audio: string, inputFormat: string): Promise<s
 
 async function performDiarization(base64Audio: string, fileName: string): Promise<DiarizationResult | null> {
   try {
-    const response = await fetch(DIARIZATION_SERVICE_URL + '/diarize-base64', {
+    const response = await fetch(`${DIARIZATION_SERVICE_URL}/diarize-base64`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
