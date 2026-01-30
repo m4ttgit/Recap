@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, Save, RefreshCw, Key, Server, Zap } from 'lucide-react'
+import { Settings as SettingsIcon, Save, RefreshCw, Key, Server, Zap, Mic, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 interface SettingsData {
   asrProvider: string
@@ -140,6 +141,42 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      {/* Navigation Header */}
+      <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <Mic className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-slate-900 dark:text-slate-50">Meeting Transcriber</span>
+              </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button variant="ghost" size="sm">
+                  <Mic className="w-4 h-4 mr-2" />
+                  Transcribe
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="secondary" size="sm">
+                  <SettingsIcon className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
