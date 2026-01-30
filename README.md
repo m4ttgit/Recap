@@ -56,21 +56,83 @@ This scaffold provides a robust foundation built with:
 
 ## 🚀 Quick Start
 
+### Using Bun (Recommended)
+
 ```bash
 # Install dependencies
 bun install
 
+# Setup database
+bun run db:push
+
 # Start development server
 bun run dev
+```
 
-# Build for production
-bun run build
+### Using npm
 
-# Start production server
-bun start
+```bash
+# Install dependencies
+npm install
+
+# Setup database
+npx prisma db push
+
+# Start development server
+npm run dev:npm
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see your application running.
+
+## 📦 Available Scripts
+
+### Development
+- `bun run dev` - Start development server (Bun)
+- `npm run dev:npm` - Start development server (npm)
+
+### Building
+- `bun run build` - Build for production (Bun)
+- `npm run build:npm` - Build for production (npm)
+
+### Production
+- `bun start` - Start production server (Bun)
+- `npm run start:npm` - Start production server (npm)
+
+### Database
+- `bun run db:push` - Push schema to database
+- `bun run db:generate` - Generate Prisma client
+- `bun run db:migrate` - Run database migrations
+- `bun run db:reset` - Reset database
+
+### Linting
+- `bun run lint` - Run ESLint
+
+## 🛠️ Additional Setup
+
+### Audio Converter Service (Required for MP3/M4A/OGG/FLAC)
+
+For full audio format support (WAV, WebM, MP3, M4A, OGG, FLAC), start the audio converter service:
+
+```bash
+cd mini-services/audio-converter-service
+
+# Start with Python
+export PYTHONPATH=/home/z/.local/lib/python3.13/site-packages:$PYTHONPATH
+python3 converter.py
+```
+
+The converter service runs on port 3004 and handles audio format conversion automatically.
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="file:./db/custom.db"
+CONVERTER_SERVICE_URL="http://localhost:3004"
+```
+
+For more detailed installation instructions and troubleshooting, see [README_NPM_SUPPORT.md](./README_NPM_SUPPORT.md).
 
 ## 🤖 Powered by Z.ai
 
