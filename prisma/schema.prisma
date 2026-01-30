@@ -32,17 +32,19 @@ model Post {
 }
 
 model Settings {
-  id              String   @id @default(cuid())
-  asrProvider     String   @default("zai-sdk") // zai-sdk, openrouter, local
-  asrModel        String?  // Model name for OpenRouter or local
-  llmProvider     String   @default("openai") // openai, openrouter, local, anthropic
-  llmModel        String   @default("gpt-4o-mini")
-  llmApiKey       String?  @default("") // Encrypted API key
-  llmBaseURL      String?  @default("") // Custom base URL
+  id                String   @id @default(cuid())
+  asrProvider       String   @default("zai-sdk") // zai-sdk, openrouter, local
+  asrModel          String?  // Model name for OpenRouter or local
+  customAsrModel    String?  // Custom model name for ASR
+  llmProvider       String   @default("openai") // openai, openrouter, local, anthropic
+  llmModel          String   @default("gpt-4o-mini")
+  customLlmModel    String?  // Custom model name for LLM
+  llmApiKey         String?  @default("") // Encrypted API key
+  llmBaseURL        String?  @default("") // Custom base URL
   diarizationEnabled Boolean @default(true)
   diarizationProvider String @default("pyannote") // pyannote
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Transcription {

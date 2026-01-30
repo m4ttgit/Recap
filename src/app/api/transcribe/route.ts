@@ -8,6 +8,10 @@ const DIARIZATION_SERVICE_URL = process.env.DIARIZATION_SERVICE_URL || 'http://l
 // Audio converter service configuration
 const CONVERTER_SERVICE_URL = process.env.CONVERTER_SERVICE_URL || 'http://localhost:3004'
 
+// ASR service limits
+const MAX_AUDIO_DURATION_SECONDS = 30
+const MAX_FILE_SIZE_MB = 100
+
 interface DiarizationSegment {
   start: number
   end: number
@@ -31,6 +35,39 @@ interface ConverterResponse {
 
 // Supported formats that don't need conversion
 const SUPPORTED_FORMATS = ['wav', 'webm']
+
+// Estimated bitrates for common formats (in kbps)
+const ESTIMATED_BITRATES: Record<string, number> = {
+  wav: 1411,  // 16kHz, mono, 16-bit PCM
+  webm: 64,   // Conservative estimate for Opus
+  mp3: 64,    // Conservative estimate for MP3
+  m4a: 64,    // Conservative estimate for AAC
+  ogg: 64,    // Conservative estimate for Vorbis
+  flac: 500   // Conservative estimate for FLAC
+}
+
+// Estimate audio duration from file size and format
+function estimateDuration(fileSizeBytes: number, format: string): number {
+  const bitrate = ESTIMATED_BITRATES[format] || 128 // Default to 128 kbps
+  const fileSizeKbps = fileSizeBytes * 8 / 1000 // Convert bytes to kilobits
+  const durationSeconds = fileSizeKbps / bitrate
+  return durationSeconds
+}
+
+// Format duration in human-readable form
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.round(seconds)} seconds`
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}m ${remainingSeconds}s`
+  } else {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    return `${hours}h ${minutes}m`
+  }
+}
 
 // Detect audio format from file name or MIME type
 function detectAudioFormat(fileName: string, mimeType?: string): string {
@@ -204,9 +241,9 @@ export async function POST(request: NextRequest) {
     const fileSizeMB = fileSize / (1024 * 1024)
 
     // Validate file size
-    if (fileSizeMB > 100) {
+    if (fileSizeMB > MAX_FILE_SIZE_MB) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 100MB.' },
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.` },
         { status: 400 }
       )
     }
@@ -214,6 +251,9 @@ export async function POST(request: NextRequest) {
     // Detect audio format
     const inputFormat = detectAudioFormat(audioFile.name, audioFile.type)
     console.log(`Detected audio format: ${inputFormat}`)
+
+    // Note: Duration validation removed to support unlimited audio up to 100MB
+    // The ASR service may have its own limits, but we let it handle those
 
     // Convert to WAV if not already in supported format
     let wasConverted = false
@@ -228,9 +268,29 @@ export async function POST(request: NextRequest) {
 
     // Transcribe audio
     const startTime = Date.now()
-    const response = await zai.audio.asr.create({
-      file_base64: base64Audio
-    })
+    let response
+    try {
+      response = await zai.audio.asr.create({
+        file_base64: base64Audio
+      })
+    } catch (asrError: any) {
+      console.error('ASR service error:', asrError)
+      
+      // Check if it's the 30-second limit error
+      if (asrError.message && asrError.message.includes('30秒')) {
+        return NextResponse.json(
+          {
+            error: 'The current ASR service has a 30-second duration limit. Please either: 1) Use a shorter audio file (30 seconds or less), or 2) Configure a different ASR provider in Settings that supports longer audio files. You can change the ASR provider in the Settings page.',
+            code: 'DURATION_LIMIT',
+            currentLimit: '30 seconds',
+            suggestion: 'Try a shorter audio file or configure a different ASR provider'
+          },
+          { status: 400 }
+        )
+      }
+      
+      throw asrError
+    }
     const endTime = Date.now()
 
     if (!response.text || response.text.trim().length === 0) {

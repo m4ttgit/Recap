@@ -33,23 +33,30 @@ export default function DashboardPage() {
   const [recentReports, setRecentReports] = useState<RecentItem[]>([])
   const [settings, setSettings] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDashboardData()
   }, [])
 
   const fetchDashboardData = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const response = await fetch('/api/dashboard')
       const data = await response.json()
 
       if (data.success) {
         setStats(data.stats)
-        setRecentTranscriptions(data.recent.transcriptions)
-        setRecentReports(data.recent.reports)
+        setRecentTranscriptions(data.recent?.transcriptions || [])
+        setRecentReports(data.recent?.reports || [])
         setSettings(data.settings)
+      } else {
+        setError(data.error || 'Failed to load dashboard data')
+        toast.error('Failed to load dashboard data')
       }
     } catch (error) {
+      setError('Failed to connect to server')
       console.error('Failed to fetch dashboard data:', error)
       toast.error('Failed to load dashboard data')
     } finally {
@@ -77,9 +84,26 @@ export default function DashboardPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-slate-500 mb-4">{error}</p>
+              <Button onClick={fetchDashboardData} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      {/* Navigation Header */}
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -104,10 +128,10 @@ export default function DashboardPage() {
                   Settings
                 </Button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/stats">
                 <Button variant="secondary" size="sm">
                   <BarChart3 className="w-4 h-4 mr-2" />
-                  Dashboard
+                  Statistics
                 </Button>
               </Link>
             </div>
@@ -116,7 +140,6 @@ export default function DashboardPage() {
       </nav>
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
@@ -124,7 +147,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-                Dashboard
+                Statistics
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
                 View your transcription and report statistics
@@ -133,7 +156,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="shadow-lg border-slate-200 dark:border-slate-800">
@@ -143,9 +165,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalTranscriptions}</div>
-                <p className="text-xs text-muted-foreground">
-                  All time
-                </p>
+                <p className="text-xs text-muted-foreground">All time</p>
               </CardContent>
             </Card>
 
@@ -156,9 +176,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalReports}</div>
-                <p className="text-xs text-muted-foreground">
-                  All time
-                </p>
+                <p className="text-xs text-muted-foreground">All time</p>
               </CardContent>
             </Card>
 
@@ -169,9 +187,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalWords.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Transcribed
-                </p>
+                <p className="text-xs text-muted-foreground">Transcribed</p>
               </CardContent>
             </Card>
 
@@ -182,36 +198,31 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatFileSize(stats.totalAudioSize)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total size
-                </p>
+                <p className="text-xs text-muted-foreground">Total size</p>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Current Settings */}
         {settings && (
           <Card className="mb-8 shadow-lg border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Current Configuration</CardTitle>
-              <CardDescription>
-                Active AI providers and models
-              </CardDescription>
+              <CardDescription>Active AI providers and models</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">ASR Provider</p>
-                  <Badge variant="secondary">{settings.asrProvider}</Badge>
+                  <Badge variant="secondary">{settings.asrProvider || 'Not configured'}</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">LLM Provider</p>
-                  <Badge variant="secondary">{settings.llmProvider}</Badge>
+                  <Badge variant="secondary">{settings.llmProvider || 'Not configured'}</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">LLM Model</p>
-                  <Badge variant="secondary">{settings.llmModel}</Badge>
+                  <Badge variant="secondary">{settings.llmModel || 'Not configured'}</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Diarization</p>
@@ -224,19 +235,16 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Usage by Provider */}
-        {stats && stats.transcriptionsByProvider.length > 0 && (
+        {stats && stats.transcriptionsByProvider && stats.transcriptionsByProvider.length > 0 && (
           <Card className="mb-8 shadow-lg border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Transcriptions by Provider</CardTitle>
-              <CardDescription>
-                Number of transcriptions per ASR provider
-              </CardDescription>
+              <CardDescription>Number of transcriptions per ASR provider</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.transcriptionsByProvider.map((item) => (
-                  <div key={item.provider} className="flex items-center justify-between">
+                {stats.transcriptionsByProvider.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.provider}</span>
                     <Badge variant="outline">{item.count}</Badge>
                   </div>
@@ -246,18 +254,16 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {stats && stats.reportsByProvider.length > 0 && (
+        {stats && stats.reportsByProvider && stats.reportsByProvider.length > 0 && (
           <Card className="mb-8 shadow-lg border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Reports by Provider</CardTitle>
-              <CardDescription>
-                Number of reports generated per LLM provider
-              </CardDescription>
+              <CardDescription>Number of reports generated per LLM provider</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.reportsByProvider.map((item) => (
-                  <div key={item.provider} className="flex items-center justify-between">
+                {stats.reportsByProvider.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.provider}</span>
                     <Badge variant="outline">{item.count}</Badge>
                   </div>
@@ -267,29 +273,25 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Recent Activity */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Recent Transcriptions */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card className="shadow-lg border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Recent Transcriptions</CardTitle>
-              <CardDescription>
-                Latest audio transcriptions
-              </CardDescription>
+              <CardDescription>Latest audio transcriptions</CardDescription>
             </CardHeader>
             <CardContent>
-              {recentTranscriptions.length > 0 ? (
+              {recentTranscriptions && recentTranscriptions.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {recentTranscriptions.map((item) => (
                     <div key={item.id} className="flex items-start gap-3 pb-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
                       <div className="w-2 h-2 rounded-full bg-violet-500 mt-2" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">
-                          {item.fileName}
+                          {item.fileName || 'Unknown file'}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline" className="text-xs">
-                            {item.asrProvider}
+                            {item.asrProvider || 'Unknown'}
                           </Badge>
                           <span className="text-xs text-slate-500">
                             {new Date(item.createdAt).toLocaleDateString()}
@@ -300,32 +302,27 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-500">
-                  No transcriptions yet
-                </div>
+                <div className="text-center py-8 text-slate-500">No transcriptions yet</div>
               )}
             </CardContent>
           </Card>
 
-          {/* Recent Reports */}
           <Card className="shadow-lg border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Recent Reports</CardTitle>
-              <CardDescription>
-                Latest meeting reports generated
-              </CardDescription>
+              <CardDescription>Latest meeting reports generated</CardDescription>
             </CardHeader>
             <CardContent>
-              {recentReports.length > 0 ? (
+              {recentReports && recentReports.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {recentReports.map((item) => (
                     <div key={item.id} className="pb-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
                       <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
-                        {item.summary}
+                        {item.summary || 'No summary available'}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-xs">
-                          {item.llmProvider}
+                          {item.llmProvider || 'Unknown'}
                         </Badge>
                         <span className="text-xs text-slate-500">
                           {new Date(item.createdAt).toLocaleDateString()}
@@ -335,21 +332,16 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-500">
-                  No reports generated yet
-                </div>
+                <div className="text-center py-8 text-slate-500">No reports generated yet</div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
         <Card className="shadow-lg border-slate-200 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
-            <CardDescription>
-              Common tasks and shortcuts
-            </CardDescription>
+            <CardDescription>Common tasks and shortcuts</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -370,7 +362,7 @@ export default function DashboardPage() {
                 className="w-full"
                 onClick={() => {
                   fetchDashboardData()
-                  toast.success('Dashboard refreshed')
+                  toast.success('Statistics refreshed')
                 }}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />

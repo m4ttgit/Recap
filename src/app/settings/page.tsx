@@ -16,8 +16,10 @@ import Link from 'next/link'
 interface SettingsData {
   asrProvider: string
   asrModel?: string | null
+  customAsrModel?: string | null
   llmProvider: string
   llmModel: string
+  customLlmModel?: string | null
   llmApiKey?: string | null
   llmBaseURL?: string | null
   diarizationEnabled: boolean
@@ -29,6 +31,24 @@ const ASR_PROVIDERS = [
   { value: 'openrouter', label: 'OpenRouter', description: 'Access multiple ASR models' },
   { value: 'local', label: 'Local Model', description: 'Self-hosted Whisper or similar' }
 ]
+
+const ASR_MODELS: Record<string, { value: string; label: string }[]> = {
+  zai_sdk: [
+    { value: 'default', label: 'Default Model' }
+  ],
+  openrouter: [
+    { value: 'whisper-large-v3', label: 'Whisper Large V3' },
+    { value: 'canary-1b', label: 'NVIDIA Canary 1B' },
+    { value: 'custom', label: 'Custom Model' }
+  ],
+  local: [
+    { value: 'whisper-base', label: 'Whisper Base' },
+    { value: 'whisper-small', label: 'Whisper Small' },
+    { value: 'whisper-medium', label: 'Whisper Medium' },
+    { value: 'whisper-large-v3', label: 'Whisper Large V3' },
+    { value: 'custom', label: 'Custom Model' }
+  ]
+}
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI', description: 'GPT models' },
@@ -138,6 +158,7 @@ export default function SettingsPage() {
   }
 
   const availableModels = LLM_MODELS[settings.llmProvider] || []
+  const availableAsrModels = ASR_MODELS[settings.asrProvider.replace('-', '_')] || []
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -166,7 +187,7 @@ export default function SettingsPage() {
                   Settings
                 </Button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/stats">
                 <Button variant="ghost" size="sm">
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Dashboard
@@ -211,7 +232,13 @@ export default function SettingsPage() {
               <Label htmlFor="asrProvider">ASR Provider</Label>
               <Select
                 value={settings.asrProvider}
-                onValueChange={(value) => setSettings({ ...settings, asrProvider: value })}
+                onValueChange={(value) => {
+                  setSettings({
+                    ...settings,
+                    asrProvider: value,
+                    asrModel: ASR_MODELS[value.replace('-', '_')]?.[0]?.value || 'default'
+                  })
+                }}
               >
                 <SelectTrigger id="asrProvider">
                   <SelectValue />
@@ -230,18 +257,45 @@ export default function SettingsPage() {
             </div>
 
             {settings.asrProvider !== 'zai-sdk' && (
-              <div className="space-y-2">
-                <Label htmlFor="asrModel">ASR Model</Label>
-                <Input
-                  id="asrModel"
-                  placeholder="e.g., whisper-large-v3, canary-1b"
-                  value={settings.asrModel || ''}
-                  onChange={(e) => setSettings({ ...settings, asrModel: e.target.value })}
-                />
-                <p className="text-xs text-slate-500">
-                  Enter the model name for your chosen provider
-                </p>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="asrModel">ASR Model</Label>
+                  <Select
+                    value={settings.asrModel || ''}
+                    onValueChange={(value) => setSettings({ ...settings, asrModel: value })}
+                  >
+                    <SelectTrigger id="asrModel">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableAsrModels.map(model => (
+                        <SelectItem key={model.value} value={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Custom ASR Model Name Input */}
+                {settings.asrModel === 'custom' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="customAsrModel" className="flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      Custom Model Name
+                    </Label>
+                    <Input
+                      id="customAsrModel"
+                      placeholder="e.g., whisper-large-v3-turbo, canary-1b, distil-whisper-large-v3"
+                      value={settings.customAsrModel || ''}
+                      onChange={(e) => setSettings({ ...settings, customAsrModel: e.target.value })}
+                    />
+                    <p className="text-xs text-slate-500">
+                      Enter the exact model name from your ASR provider. For Ollama, run <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">ollama list</code> to see available models.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -304,6 +358,25 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Custom Model Name Input for Local Provider */}
+            {settings.llmProvider === 'local' && settings.llmModel === 'custom' && (
+              <div className="space-y-2">
+                <Label htmlFor="customLlmModel" className="flex items-center gap-2">
+                  <Server className="w-4 h-4" />
+                  Custom Model Name
+                </Label>
+                <Input
+                  id="customLlmModel"
+                  placeholder="e.g., ollama/llama3.2:latest, mistral-7b-instruct"
+                  value={settings.customLlmModel || ''}
+                  onChange={(e) => setSettings({ ...settings, customLlmModel: e.target.value })}
+                />
+                <p className="text-xs text-slate-500">
+                  Enter the exact model name from Ollama (e.g., <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">ollama list</code>). Example: <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">ollama/llama3.2:latest</code> or <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">llama3.2:latest</code>
+                </p>
+              </div>
+            )}
 
             {settings.llmProvider !== 'openai' && (
               <>

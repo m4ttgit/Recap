@@ -60,7 +60,7 @@ export default function MeetingTranscriber() {
   const [enableDiarization, setEnableDiarization] = useState(true)
 
   const handleFileSelect = (file: File) => {
-    // Accept all common audio formats - backend will convert if needed
+    // Accept all common audio formats - will be converted to WAV if needed
     const validTypes = [
       'audio/wav', 'audio/wave', 'audio/x-wav',
       'audio/webm',
@@ -74,7 +74,7 @@ export default function MeetingTranscriber() {
 
     if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension || '')) {
       toast.error('Invalid file type', {
-        description: 'Please upload an audio file (WAV, MP3, M4A, OGG, FLAC, or WebM).'
+        description: 'Please upload an audio file (WAV, WebM, MP3, M4A, OGG, or FLAC).'
       })
       return
     }
@@ -296,7 +296,7 @@ ${transcription.text}
                   Settings
                 </Button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/stats">
                 <Button variant="ghost" size="sm">
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Dashboard
@@ -333,7 +333,7 @@ ${transcription.text}
                   Upload Audio
                 </CardTitle>
                 <CardDescription>
-                  Drag and drop or click to select an audio file (WAV, MP3, M4A, OGG, FLAC, WebM)
+                  Drag and drop or click to select an audio file (WAV, WebM, MP3, M4A, OGG, FLAC). Maximum 100MB.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -370,7 +370,7 @@ ${transcription.text}
                       {selectedFile ? selectedFile.name : 'Click to upload or drag and drop'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      WAV, MP3, M4A, OGG, FLAC, WebM • Max 100MB
+                      WAV, WebM, MP3, M4A, OGG, FLAC • Max 100MB
                     </p>
                   </label>
                 </div>
