@@ -286,7 +286,9 @@ ${transcription.text}
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              {session ? (
+              {status === 'loading' ? (
+                <div className="text-sm text-slate-600 dark:text-slate-400">Loading...</div>
+              ) : session ? (
                 <>
                   <Link href="/stats">
                     <Button variant="ghost" size="sm">

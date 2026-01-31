@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,11 +60,25 @@ export default function SignUpPage() {
         return
       }
 
-      toast.success('Account created successfully!', {
-        description: 'Please sign in with your credentials'
+      // Auto sign-in after successful registration
+      const signInResult = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       })
 
-      router.push('/auth/signin')
+      if (signInResult?.error) {
+        toast.success('Account created successfully!', {
+          description: 'Please sign in with your credentials'
+        })
+        router.push('/auth/signin')
+      } else {
+        toast.success('Account created successfully!', {
+          description: 'You are now signed in'
+        })
+        router.push('/')
+        router.refresh()
+      }
     } catch (error) {
       setError('An error occurred. Please try again.')
       toast.error('Registration failed')
