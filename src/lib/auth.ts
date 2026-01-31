@@ -1,9 +1,12 @@
-import type { NextAuthConfig } from "next-auth"
+import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
-export const authOptions: NextAuthConfig = {
+export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
