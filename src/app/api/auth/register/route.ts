@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email }
     })
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12)
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         email,
         password: hashedPassword,
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create default settings for user
-    await prisma.settings.create({
+    await db.settings.create({
       data: {
         userId: user.id,
       }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
-    await prisma.usageQuota.create({
+    await db.usageQuota.create({
       data: {
         userId: user.id,
         monthlyQuota: 60, // 60 minutes free tier
