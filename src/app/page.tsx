@@ -322,17 +322,16 @@ ${transcription.text}
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column - Upload and Transcription */}
-          <div className="space-y-6">
+        <div className="flex justify-center">
+          <div className="w-full max-w-2xl space-y-6">
             {/* Upload Card */}
             <Card className="shadow-lg border-slate-200 dark:border-slate-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center justify-center gap-2">
                   <Upload className="w-5 h-5" />
                   Upload Audio
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-center">
                   Drag and drop or click to select an audio file (WAV, WebM, MP3, M4A, OGG, FLAC). Maximum 100MB.
                 </CardDescription>
               </CardHeader>
@@ -366,10 +365,10 @@ ${transcription.text}
                     }`}>
                       <FileAudio className="w-8 h-8" />
                     </div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1 text-center">
                       {selectedFile ? selectedFile.name : 'Click to upload or drag and drop'}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                       WAV, WebM, MP3, M4A, OGG, FLAC • Max 100MB
                     </p>
                   </label>
@@ -522,153 +521,138 @@ ${transcription.text}
                 </CardContent>
               </Card>
             )}
-          </div>
 
-          {/* Right Column - Report Display */}
-          {report && (
-            <Card className="shadow-lg border-slate-200 dark:border-slate-800 h-fit">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Meeting Report
-                  </CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadReport}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
-                </div>
-                <CardDescription>
-                  AI-generated summary and action items
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="summary" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
-                    <TabsTrigger value="points">Points</TabsTrigger>
-                    <TabsTrigger value="actions">Actions</TabsTrigger>
-                    <TabsTrigger value="info">Info</TabsTrigger>
-                  </TabsList>
+            {/* Meeting Report */}
+            {report && (
+              <Card className="shadow-lg border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Meeting Report
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadReport}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    AI-generated summary and action items
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="summary" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="summary">Summary</TabsTrigger>
+                      <TabsTrigger value="points">Points</TabsTrigger>
+                      <TabsTrigger value="actions">Actions</TabsTrigger>
+                      <TabsTrigger value="info">Info</TabsTrigger>
+                    </TabsList>
 
-                  <TabsContent value="summary" className="space-y-4 mt-4">
-                    <div className="prose dark:prose-invert text-sm">
-                      {report.summary || (
+                    <TabsContent value="summary" className="space-y-4 mt-4">
+                      <div className="prose dark:prose-invert text-sm">
+                        {report.summary || (
+                          <Alert>
+                            <AlertDescription>No summary available</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="points" className="space-y-3 mt-4">
+                      {report.keyPoints.length > 0 ? (
+                        report.keyPoints.map((point, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm text-slate-700 dark:text-slate-300">{point}</p>
+                          </div>
+                        ))
+                      ) : (
                         <Alert>
-                          <AlertDescription>No summary available</AlertDescription>
+                          <AlertDescription>No key points available</AlertDescription>
                         </Alert>
                       )}
-                    </div>
-                  </TabsContent>
+                    </TabsContent>
 
-                  <TabsContent value="points" className="space-y-3 mt-4">
-                    {report.keyPoints.length > 0 ? (
-                      report.keyPoints.map((point, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
-                            {index + 1}
-                          </div>
-                          <p className="text-sm text-slate-700 dark:text-slate-300">{point}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <Alert>
-                        <AlertDescription>No key points available</AlertDescription>
-                      </Alert>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="actions" className="space-y-3 mt-4">
-                    {report.actionItems.length > 0 ? (
-                      report.actionItems.map((item, index) => (
-                        <Card key={index} className="border-slate-200 dark:border-slate-800">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <CheckCircle className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-2">
-                                  {item.task}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {item.assignee && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <Users className="w-3 h-3 mr-1" />
-                                      {item.assignee}
-                                    </Badge>
-                                  )}
-                                  {item.deadline && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <Calendar className="w-3 h-3 mr-1" />
-                                      {item.deadline}
-                                    </Badge>
-                                  )}
+                    <TabsContent value="actions" className="space-y-3 mt-4">
+                      {report.actionItems.length > 0 ? (
+                        report.actionItems.map((item, index) => (
+                          <Card key={index} className="border-slate-200 dark:border-slate-800">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <CheckCircle className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-2">
+                                    {item.task}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {item.assignee && (
+                                      <Badge variant="outline" className="text-xs">
+                                        <Users className="w-3 h-3 mr-1" />
+                                        {item.assignee}
+                                      </Badge>
+                                    )}
+                                    {item.deadline && (
+                                      <Badge variant="outline" className="text-xs">
+                                        <Calendar className="w-3 h-3 mr-1" />
+                                        {item.deadline}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <Alert>
-                        <AlertDescription>No action items available</AlertDescription>
-                      </Alert>
-                    )}
-                  </TabsContent>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <Alert>
+                          <AlertDescription>No action items available</AlertDescription>
+                        </Alert>
+                      )}
+                    </TabsContent>
 
-                  <TabsContent value="info" className="space-y-4 mt-4">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1">
-                          Date
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {report.date || new Date(transcription.timestamp).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Separator />
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1">
-                          Participants
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {report.participants.length > 0 ? (
-                            report.participants.map((participant, index) => (
-                              <Badge key={index} variant="secondary">
-                                {participant}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-sm text-slate-500 dark:text-slate-400">
-                              Not detected
-                            </span>
-                          )}
+                    <TabsContent value="info" className="space-y-4 mt-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1">
+                            Date
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {report.date || new Date(transcription.timestamp).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-50 mb-1">
+                            Participants
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {report.participants.length > 0 ? (
+                              report.participants.map((participant, index) => (
+                                <Badge key={index} variant="secondary">
+                                  {participant}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-sm text-slate-500 dark:text-slate-400">
+                                Not detected
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Empty State for Report */}
-          {!report && transcription && !isGeneratingReport && (
-            <Card className="shadow-lg border-slate-200 dark:border-slate-800 h-fit">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" />
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  No Report Generated Yet
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 text-center max-w-xs">
-                  Generate a meeting report from your transcription to see summary, key points, and action items.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
