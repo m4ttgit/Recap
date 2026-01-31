@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Upload, FileAudio, Mic, FileText, Download, RefreshCw, Sparkles, Calendar, Users, CheckCircle, User, Settings as SettingsIcon, LayoutDashboard } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Upload, FileAudio, Mic, FileText, Download, RefreshCw, Sparkles, Calendar, Users, CheckCircle, User, Settings as SettingsIcon, LayoutDashboard, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -50,6 +51,7 @@ interface MeetingReport {
 }
 
 export default function MeetingTranscriber() {
+  const { data: session, status } = useSession()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
@@ -284,24 +286,50 @@ ${transcription.text}
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <Mic className="w-4 h-4 mr-2" />
-                  Transcribe
-                </Button>
-              </Link>
-              <Link href="/settings">
-                <Button variant="ghost" size="sm">
-                  <SettingsIcon className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </Link>
-              <Link href="/stats">
-                <Button variant="ghost" size="sm">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
+              {session ? (
+                <>
+                  <Link href="/stats">
+                    <Button variant="ghost" size="sm">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/settings">
+                    <Button variant="ghost" size="sm">
+                      <SettingsIcon className="w-4 h-4 mr-2" />
+                      Settings
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <User className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {session.user?.name || session.user?.email}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin">
+                    <Button variant="ghost" size="sm">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signup">
+                    <Button size="sm">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
