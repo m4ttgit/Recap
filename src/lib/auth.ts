@@ -2,6 +2,34 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import { JWT } from "next-auth/jwt"
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      email: string
+      name?: string | null
+      image?: string | null
+      role: string
+    }
+  }
+
+  interface User {
+    id: string
+    email: string
+    name?: string | null
+    image?: string | null
+    role: string
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    role: string
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -61,9 +89,9 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).id = token.id
-        (session.user as any).role = token.role
+      if (token && session.user) {
+        session.user.id = token.id
+        session.user.role = token.role
       }
       return session
     }
