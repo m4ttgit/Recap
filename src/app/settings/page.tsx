@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, Save, RefreshCw, Key, Server, Zap, Mic, LayoutDashboard } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Settings as SettingsIcon, Save, RefreshCw, Key, Server, Zap, Mic, LayoutDashboard, User, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -12,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { AuthGuard } from '@/components/auth-guard'
 
 interface SettingsData {
   asrProvider: string
@@ -82,6 +84,7 @@ const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
 }
 
 export default function SettingsPage() {
+  const { data: session, status } = useSession()
   const [settings, setSettings] = useState<SettingsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -161,7 +164,8 @@ export default function SettingsPage() {
   const availableAsrModels = ASR_MODELS[settings.asrProvider.replace('-', '_')] || []
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       {/* Navigation Header */}
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -175,24 +179,55 @@ export default function SettingsPage() {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <Mic className="w-4 h-4 mr-2" />
-                  Transcribe
-                </Button>
-              </Link>
-              <Link href="/settings">
-                <Button variant="secondary" size="sm">
-                  <SettingsIcon className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </Link>
-              <Link href="/stats">
-                <Button variant="ghost" size="sm">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
+              {status === 'loading' ? (
+                <div className="text-sm text-slate-600 dark:text-slate-400">Loading...</div>
+              ) : session ? (
+                <>
+                  <Link href="/stats">
+                    <Button variant="ghost" size="sm">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/">
+                    <Button variant="ghost" size="sm">
+                      <Mic className="w-4 h-4 mr-2" />
+                      Transcribe
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled
+                  >
+                    <SettingsIcon className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <User className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {session.user?.name || session.user?.email}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin">
+                    <Button variant="ghost" size="sm">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -500,5 +535,6 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+    </AuthGuard>
   )
 }

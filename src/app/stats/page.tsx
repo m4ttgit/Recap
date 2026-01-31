@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Mic, FileAudio, Clock, FileText, BarChart3, Server, RefreshCw } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Mic, FileAudio, Clock, FileText, BarChart3, Server, RefreshCw, Settings as SettingsIcon, User, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { AuthGuard } from '@/components/auth-guard'
 
 interface DashboardStats {
   totalTranscriptions: number
@@ -28,6 +30,7 @@ interface RecentItem {
 }
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentTranscriptions, setRecentTranscriptions] = useState<RecentItem[]>([])
   const [recentReports, setRecentReports] = useState<RecentItem[]>([])
@@ -103,7 +106,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -116,24 +120,55 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <Mic className="w-4 h-4 mr-2" />
-                  Transcribe
-                </Button>
-              </Link>
-              <Link href="/settings">
-                <Button variant="ghost" size="sm">
-                  <Server className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </Link>
-              <Link href="/stats">
-                <Button variant="secondary" size="sm">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Statistics
-                </Button>
-              </Link>
+              {status === 'loading' ? (
+                <div className="text-sm text-slate-600 dark:text-slate-400">Loading...</div>
+              ) : session ? (
+                <>
+                  <Link href="/">
+                    <Button variant="ghost" size="sm">
+                      <Mic className="w-4 h-4 mr-2" />
+                      Transcribe
+                    </Button>
+                  </Link>
+                  <Link href="/settings">
+                    <Button variant="ghost" size="sm">
+                      <SettingsIcon className="w-4 h-4 mr-2" />
+                      Settings
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Statistics
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <User className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {session.user?.name || session.user?.email}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin">
+                    <Button variant="ghost" size="sm">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -373,5 +408,6 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+    </AuthGuard>
   )
 }
