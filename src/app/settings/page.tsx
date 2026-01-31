@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Settings as SettingsIcon, Save, RefreshCw, Key, Server, Zap, Mic, LayoutDashboard, User, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -84,6 +85,7 @@ const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { data: session, status } = useSession()
   const [settings, setSettings] = useState<SettingsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -107,6 +109,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false })
+    router.push('/auth/signin')
   }
 
   const handleSave = async () => {
@@ -206,7 +213,7 @@ export default function SettingsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                    onClick={handleSignOut}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out

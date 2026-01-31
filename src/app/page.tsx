@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Upload, FileAudio, Mic, FileText, Download, RefreshCw, Sparkles, Calendar, Users, CheckCircle, User, Settings as SettingsIcon, LayoutDashboard, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -271,6 +272,11 @@ ${transcription.text}
     toast.success('Reset successfully')
   }
 
+  const handleSignOut = async () => {
+    await signOut({ redirect: false })
+    router.push('/auth/signin')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       {/* Navigation Header */}
@@ -305,7 +311,7 @@ ${transcription.text}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                    onClick={handleSignOut}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out

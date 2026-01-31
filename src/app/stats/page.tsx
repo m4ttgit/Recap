@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Mic, FileAudio, Clock, FileText, BarChart3, Server, RefreshCw, Settings as SettingsIcon, User, LogOut, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,7 @@ interface RecentItem {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { data: session, status } = useSession()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentTranscriptions, setRecentTranscriptions] = useState<RecentItem[]>([])
@@ -73,6 +75,11 @@ export default function DashboardPage() {
     const sizes = ['B', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false })
+    router.push('/auth/signin')
   }
 
   if (loading) {
@@ -147,7 +154,7 @@ export default function DashboardPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                    onClick={handleSignOut}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
